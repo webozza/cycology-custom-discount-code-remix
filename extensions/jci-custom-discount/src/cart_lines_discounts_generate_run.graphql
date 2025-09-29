@@ -1,0 +1,49 @@
+query CartInput {
+  cart {
+    cost{
+      subtotalAmount{
+        amount
+      }
+      totalAmount{
+        amount
+      }
+      totalDutyAmount{
+        amount
+      }
+    }
+    lines {
+      id
+      quantity
+      attribute(key: "_has_discount"){
+        value
+      }
+      cost {
+        subtotalAmount {
+          amount
+        }
+        totalAmount{
+          amount
+        }
+      }
+      merchandise {
+        __typename
+        ... on ProductVariant {
+          id
+          title
+          product {
+            id
+            metafield(namespace: "custom" key: "bundle_discount"){
+              value
+            }
+          }
+        }
+      }
+    }
+  }
+  discount {
+    discountClasses
+    metafield(namespace: "default", key: "function-configuration") {  # <-- same ns/key you set when creating the discount
+      jsonValue
+    }
+  }
+}
