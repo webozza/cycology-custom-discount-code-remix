@@ -1,9 +1,10 @@
 // app/routes/app.discounts.new.tsx
 import { useEffect, useState } from "react";
 import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
-import { useFetcher, useLoaderData } from "react-router";
+import { useFetcher, useLoaderData, useNavigate } from "react-router";
 import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
+import { InlineStack } from '@shopify/polaris';
 
 const SHOP_QUERY = `#graphql
   query ShopCurrency { shop { currencyCode } }
@@ -24,6 +25,7 @@ export default function NewDiscount() {
   const [value, setValue] = useState("");
   const [minSubtotal, setMinSubtotal] = useState("");
   const [code, setCode] = useState("");
+  const navigate = useNavigate();
 
   const submitting = fetcher.state === "submitting";
 
@@ -36,19 +38,28 @@ export default function NewDiscount() {
 
   const handleCreate = () => {
     const fd = new FormData();
+    
     fd.set("method", method);
     fd.set("value", value);
     fd.set("minSubtotal", minSubtotal);
     fd.set("code", code);
     fd.set("currencyCode", currencyCode);
-    fetcher.submit(fd, { method: "POST", action: "/api/discount" /* <= adjust path if your base is different */ });
+    //fetcher.submit(fd, { method: "POST", action: "/api/discount" /* <= adjust path if your base is different */ });
+
+
+    fetch("/api/discount", { method: "POST", body: fd })
+    .then((r) => r.json())
+    .then((res) => {
+      if (res.ok) navigate(res.next ?? "/app");
+      else alert(res.error || "Failed");
+    });
   };
 
   return (
-    <s-page heading="Create discount">
+    <s-page>
       <s-section>
         {fetcher.data?.error && (
-          <s-banner tone="critical" title="Error">
+          <s-banner tone="critical">
             <s-text>{fetcher.data.error}</s-text>
           </s-banner>
         )}
@@ -66,22 +77,20 @@ export default function NewDiscount() {
             <s-option value="amount">Amount ({currencyCode})</s-option>
           </s-select>
 
-          <s-inline-stack gap="base">
+          <InlineStack gap="400" align="center">
             <s-text-field
-              type="number"
               label={method === "percentage" ? "Percent off (%)" : `Amount off (${currencyCode})`}
               value={value}
               onChange={(e: any) => setValue(e.target.value)}
               placeholder={method === "percentage" ? "e.g. 15" : "e.g. 10.00"}
             />
             <s-text-field
-              type="number"
               label={`Minimum order subtotal (${currencyCode}) (optional)`}
               value={minSubtotal}
               onChange={(e: any) => setMinSubtotal(e.target.value)}
               placeholder="e.g. 100.00"
             />
-          </s-inline-stack>
+          </InlineStack>
 
           <s-text-field
             label="Discount code"
@@ -90,14 +99,14 @@ export default function NewDiscount() {
             placeholder="e.g. AUTUMN25"
           />
 
-          <s-inline-stack gap="base">
+          <InlineStack gap="400" align="center">
             <a href="/app/discounts">
               <s-button variant="tertiary">Cancel</s-button>
             </a>
             <s-button onClick={handleCreate} {...(submitting ? { loading: true } : {})}>
               Create
             </s-button>
-          </s-inline-stack>
+          </InlineStack>
         </s-stack>
       </s-section>
     </s-page>
