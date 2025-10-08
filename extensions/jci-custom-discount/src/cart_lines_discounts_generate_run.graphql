@@ -35,6 +35,9 @@ query CartInput {
             metafield(namespace: "custom" key: "bundle_discount"){
               value
             }
+            inCollections {
+              collectionId
+            }
           }
         }
       }
