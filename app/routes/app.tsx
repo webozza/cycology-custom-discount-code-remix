@@ -1,9 +1,21 @@
 import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
 import { Outlet, useLoaderData, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
-import { AppProvider } from "@shopify/shopify-app-react-router/react";
+import { AppProvider as PolarisAppProvider, DatePicker, InlineStack } from '@shopify/polaris';  // Polaris AppProvider
+import { AppProvider as AppBridgeProvider } from "@shopify/shopify-app-react-router/react";
+
+import '@shopify/polaris/build/esm/styles.css';
 
 import { authenticate } from "../shopify.server";
+
+// Initialize i18n (basic config, you can expand this later)
+const i18n = {
+  Polaris: {
+    Locale: 'en', // Locale for your app
+    Direction: 'ltr',
+    Messages: {}, // Add translations here
+  },
+};
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await authenticate.admin(request);
@@ -16,9 +28,11 @@ export default function App() {
   const { apiKey } = useLoaderData<typeof loader>();
 
   return (
-    <AppProvider embedded apiKey={apiKey}>
-      <Outlet />
-    </AppProvider>
+    <AppBridgeProvider apiKey={apiKey} embedded>
+      <PolarisAppProvider i18n={i18n}>
+        <Outlet />
+      </PolarisAppProvider>
+    </AppBridgeProvider>
   );
 }
 

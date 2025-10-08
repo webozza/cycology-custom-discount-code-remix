@@ -1,14 +1,15 @@
 // app/routes/app.discounts.new.tsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
 import { useFetcher, useLoaderData, useNavigate } from "react-router";
 import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { InlineStack } from "@shopify/polaris";
 
+import '@shopify/polaris/build/esm/styles.css';
+
 // App Bridge (embedded)
 import { useAppBridge } from "@shopify/app-bridge-react";
-import { ResourcePicker } from "@shopify/app-bridge/actions";
 
 /** ─────────────────────────────────────────────────────────────────────
  * Loader: fetch shop currency for labels
@@ -27,7 +28,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 /** ─────────────────────────────────────────────────────────────────────
  * Types
  * ────────────────────────────────────────────────────────────────────*/
-type DiscountType = "product_amount" | "order_amount" | "bxgy";
+type DiscountType = "order_amount"; //"product_amount" | ;
 type Method = "percentage" | "amount";
 type CollectionsMode = "all" | "specific";
 type GetBenefitType = "free" | "percent" | "amount";
@@ -64,7 +65,7 @@ export default function NewDiscount() {
   const submitting = fetcher.state === "submitting";
 
   // Global
-  const [discountType, setDiscountType] = useState<DiscountType>("product_amount");
+  const [discountType, setDiscountType] = useState<DiscountType>("order_amount");
   const [code, setCode] = useState("");
 
   // Amount off Product
@@ -80,19 +81,20 @@ export default function NewDiscount() {
   const [orderCollectionsMode, setOrderCollectionsMode] = useState<CollectionsMode>("specific");
   const [orderCollections, setOrderCollections] = useState<PickedCollection[]>([]);
 
-  // Buy X Get Y
-  const [buyQty, setBuyQty] = useState("1");
-  const [buyCollectionsMode, setBuyCollectionsMode] = useState<CollectionsMode>("specific");
-  const [buyCollections, setBuyCollections] = useState<PickedCollection[]>([]);
+  // New state for start and end dates
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
 
-  const [getQty, setGetQty] = useState("1");
-  const [getBenefitType, setGetBenefitType] = useState<GetBenefitType>("free");
-  const [getBenefitValue, setGetBenefitValue] = useState(""); // % or amount when not "free"
-  const [getCollectionsMode, setGetCollectionsMode] = useState<CollectionsMode>("specific");
-  const [getCollections, setGetCollections] = useState<PickedCollection[]>([]);
-
-  const [repeats, setRepeats] = useState(true);
-  const [maxRepeatsPerOrder, setMaxRepeatsPerOrder] = useState("");
+  const dateInputStyle = {
+    paddingInlineStart: "var(--s-input-field-padding-inline-start-25041, 0.75rem)",
+    paddingInlineEnd: "var(--s-input-field-padding-inline-end-25041, 0.75rem)",
+    fontSize: "var(--s-input-field-font-size-25041, .875rem)",
+    lineHeight: "var(--s-input-field-line-height-25041, 1.25rem)",
+    minBlockSize: "var(--s-input-field-min-block-size-25041, 2rem)",
+    borderRadius: "var(--s-input-field-border-radius-25041, 0.5rem)",
+    boxShadow: "inset 0 0 0 var(--s-input-field-box-shadow-width-25041, 0.04125rem) #8a8a8a",
+    border: "none"
+  }
 
   useEffect(() => {
     if (fetcher.data?.ok) {
@@ -110,13 +112,6 @@ export default function NewDiscount() {
     console.log('picked', picked);
     if (picked.length) setOrderCollections(picked);
   }
-  async function pickBxCollections(side: "buy" | "get") {
-    const current = side === "buy" ? buyCollections : getCollections;
-    const picked = await openCollectionsPicker(app, current.map((c) => c.id));
-    console.log('picked', picked);
-    if (!picked.length) return;
-    side === "buy" ? setBuyCollections(picked) : setGetCollections(picked);
-  }
 
   /** Form submit */
   const handleCreate = () => {
@@ -124,7 +119,10 @@ export default function NewDiscount() {
     fd.set("currencyCode", currencyCode);
     fd.set("discountType", discountType);
     fd.set("code", code);
+    fd.set("startDate", startDate);
+    fd.set("endDate", endDate);
 
+    /*
     if (discountType === "product_amount") {
       fd.set("method", prodMethod);
       fd.set("value", prodValue);
@@ -134,6 +132,7 @@ export default function NewDiscount() {
         for (const c of prodCollections) fd.append("productCollectionIds[]", c.id || "");
       }
     }
+      */
 
     if (discountType === "order_amount") {
       fd.set("method", orderMethod);
@@ -143,27 +142,6 @@ export default function NewDiscount() {
       if (orderCollectionsMode === "specific") {
         for (const c of orderCollections) fd.append("orderCollectionIds[]", c.id || "");
       }
-    }
-
-    if (discountType === "bxgy") {
-      fd.set("buyQty", buyQty);
-      fd.set("buyCollectionsMode", buyCollectionsMode);
-      if (buyCollectionsMode === "specific") {
-        for (const c of buyCollections) fd.append("buyCollectionIds[]", c.id || "");
-      }
-
-      fd.set("getQty", getQty);
-      fd.set("getBenefitType", getBenefitType);
-      if (getBenefitType !== "free" && getBenefitValue) {
-        fd.set("getBenefitValue", getBenefitValue);
-      }
-      fd.set("getCollectionsMode", getCollectionsMode);
-      if (getCollectionsMode === "specific") {
-        for (const c of getCollections) fd.append("getCollectionIds[]", c.id || "");
-      }
-
-      fd.set("repeats", String(repeats));
-      if (repeats && maxRepeatsPerOrder) fd.set("maxRepeatsPerOrder", maxRepeatsPerOrder);
     }
 
     // You used fetch() in your original — keep it consistent
@@ -194,61 +172,8 @@ export default function NewDiscount() {
               setDiscountType((e.target as HTMLSelectElement).value as DiscountType)
             }
           >
-            <s-option value="product_amount">Amount off Product</s-option>
             <s-option value="order_amount">Amount off Order</s-option>
-            <s-option value="bxgy">Buy X Get Y</s-option>
           </s-select>
-
-          {/* Amount off Product */}
-          {discountType === "product_amount" && (
-            <>
-              <s-select
-                label="Method"
-                value={prodMethod}
-                onChange={(e: any) =>
-                  setProdMethod((e.target as HTMLSelectElement).value as Method)
-                }
-              >
-                <s-option value="percentage">Percent (%)</s-option>
-                <s-option value="amount">Amount ({currencyCode})</s-option>
-              </s-select>
-
-              <s-text-field
-                label={prodMethod === "percentage" ? "Percent off (%)" : `Amount off (${currencyCode})`}
-                value={prodValue}
-                onChange={(e: any) => setProdValue(e.target.value)}
-                placeholder={prodMethod === "percentage" ? "e.g. 15" : "e.g. 10.00"}
-              />
-
-              <InlineStack gap="400" align="center">
-                <s-select
-                  label="Collections scope"
-                  value={prodCollectionsMode}
-                  onChange={(e: any) =>
-                    setProdCollectionsMode((e.target as HTMLSelectElement).value as CollectionsMode)
-                  }
-                >
-                  <s-option value="all">All collections</s-option>
-                  <s-option value="specific">Specific collections</s-option>
-                </s-select>
-
-                {prodCollectionsMode === "specific" && (
-                  <div style={{ width: "100%" }}>
-                    <s-text>Select product collections</s-text>
-                    <InlineStack gap="200" align="center">
-                      <s-button onClick={pickProdCollections}>Choose collections</s-button>
-                    </InlineStack>
-                    <ChipsGrid
-                      items={prodCollections}
-                      onRemove={(id) =>
-                        setProdCollections(prodCollections.filter((c) => c.id !== id))
-                      }
-                    />
-                  </div>
-                )}
-              </InlineStack>
-            </>
-          )}
 
           {/* Amount off Order */}
           {discountType === "order_amount" && (
@@ -309,147 +234,25 @@ export default function NewDiscount() {
             </>
           )}
 
-          {/* Buy X Get Y */}
-          {discountType === "bxgy" && (
-            <>
-              <s-subsection>
-                <s-text as="h3" variant="headingMd">Buy (qualifier)</s-text>
-                <InlineStack gap="400" align="center">
-                  <s-text-field
-                    label="Minimum quantity to buy"
-                    value={buyQty}
-                    onChange={(e: any) => setBuyQty(e.target.value)}
-                    type="number"
-                    min="1"
-                  />
-                  <s-select
-                    label="Buy applies to"
-                    value={buyCollectionsMode}
-                    onChange={(e: any) =>
-                      setBuyCollectionsMode((e.target as HTMLSelectElement).value as CollectionsMode)
-                    }
-                  >
-                    <s-option value="all">Any products</s-option>
-                    <s-option value="specific">Specific collections</s-option>
-                  </s-select>
-                </InlineStack>
+          <InlineStack gap="4">
+            {/* Start Date */}
+            <div>
+              <label htmlFor="startDate">Start Date</label><br/>
+              <input style={dateInputStyle} type="date" id="startDate" name="startDate" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            </div>
 
-                {buyCollectionsMode === "specific" && (
-                  <div style={{ width: "100%" }}>
-                    <s-text>Select buy collections</s-text>
-                    <InlineStack gap="200" align="center">
-                      <s-button onClick={() => pickBxCollections("buy")}>Choose collections</s-button>
-                    </InlineStack>
-                    <ChipsGrid
-                      items={buyCollections}
-                      onRemove={(id) =>
-                        setBuyCollections(buyCollections.filter((c) => c.id !== id))
-                      }
-                    />
-                  </div>
-                )}
-              </s-subsection>
+            {/* End Date */}
+            <div>
+              <label htmlFor="endDate">End Date</label><br/>
+              <input style={dateInputStyle} type="date" id="endDate" name="endDate" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            </div>
+          </InlineStack>
 
-              <s-subsection>
-                <s-text as="h3" variant="headingMd">Get (benefit)</s-text>
-                <InlineStack gap="400" align="center">
-                  <s-text-field
-                    label="Quantity customer gets"
-                    value={getQty}
-                    onChange={(e: any) => setGetQty(e.target.value)}
-                    type="number"
-                    min="1"
-                  />
-                  <s-select
-                    label="Benefit type"
-                    value={getBenefitType}
-                    onChange={(e: any) =>
-                      setGetBenefitType((e.target as HTMLSelectElement).value as GetBenefitType)
-                    }
-                  >
-                    <s-option value="free">Free</s-option>
-                    <s-option value="percent">Percent off (%)</s-option>
-                    <s-option value="amount">Amount off ({currencyCode})</s-option>
-                  </s-select>
-                </InlineStack>
-
-                {getBenefitType === "percent" && (
-                  <s-text-field
-                    label="Percent off (%)"
-                    value={getBenefitValue}
-                    onChange={(e: any) => setGetBenefitValue(e.target.value)}
-                    placeholder="e.g. 100 for free, 50 for half off"
-                  />
-                )}
-                {getBenefitType === "amount" && (
-                  <s-text-field
-                    label={`Amount off (${currencyCode})`}
-                    value={getBenefitValue}
-                    onChange={(e: any) => setGetBenefitValue(e.target.value)}
-                    placeholder="e.g. 10.00"
-                  />
-                )}
-
-                <InlineStack gap="400" align="center">
-                  <s-select
-                    label="Get applies to"
-                    value={getCollectionsMode}
-                    onChange={(e: any) =>
-                      setGetCollectionsMode((e.target as HTMLSelectElement).value as CollectionsMode)
-                    }
-                  >
-                    <s-option value="all">Any products</s-option>
-                    <s-option value="specific">Specific collections</s-option>
-                  </s-select>
-                </InlineStack>
-
-                {getCollectionsMode === "specific" && (
-                  <div style={{ width: "100%" }}>
-                    <s-text>Select get collections</s-text>
-                    <InlineStack gap="200" align="center">
-                      <s-button onClick={() => pickBxCollections("get")}>Choose collections</s-button>
-                    </InlineStack>
-                    <ChipsGrid
-                      items={getCollections}
-                      onRemove={(id) =>
-                        setGetCollections(getCollections.filter((c) => c.id !== id))
-                      }
-                    />
-                  </div>
-                )}
-              </s-subsection>
-
-              <s-subsection>
-                <s-text as="h3" variant="headingMd">Per-order application</s-text>
-                <InlineStack gap="400" align="center">
-                  <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <input
-                      type="checkbox"
-                      checked={repeats}
-                      onChange={(e) => setRepeats(e.target.checked)}
-                    />
-                    <s-text>Repeat for every multiple</s-text>
-                  </label>
-                  {repeats && (
-                    <s-text-field
-                      label="Max repeats per order (optional)"
-                      value={maxRepeatsPerOrder}
-                      onChange={(e: any) => setMaxRepeatsPerOrder(e.target.value)}
-                      type="number"
-                      min="1"
-                    />
-                  )}
-                </InlineStack>
-              </s-subsection>
-            </>
-          )}
-
-          {/* Common: code + actions */}
           <s-text-field
             label="Discount code"
             value={code}
             onChange={(e: any) => setCode(e.target.value)}
-            placeholder={discountType === "bxgy" ? "e.g. BUY2GET1" : "e.g. SAVE15"}
+            placeholder={"e.g. SAVE15"}
           />
 
           <InlineStack gap="400" align="center">

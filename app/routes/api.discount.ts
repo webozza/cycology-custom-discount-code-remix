@@ -104,15 +104,26 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     data.orderCollectionIds   = arr(form, "orderCollectionIds[]");
     data.buyCollectionIds     = arr(form, "buyCollectionIds[]");
     data.getCollectionIds     = arr(form, "getCollectionIds[]");
+    data.startDate            = arr(form, "startDate");
+    data.endDate              = arr(form, "endDate");
   }
 
   const discountType = (data.discountType || "product_amount") as
     | "product_amount"
-    | "order_amount"
-    | "bxgy";
+    | "order_amount";
 
   const code = (data.code || "").trim();
   const currencyCode = (data.currencyCode || "USD").trim();
+
+  if((!data.startDate || data.startDate=='')){
+    return Response.json({ ok: false, error: "Start date is required." }, { status: 400 });
+  }
+
+
+  const startDate = (data.startDate || data.startDate!='') ? new Date(data.startDate).toISOString() : new Date().toISOString(); // Default to current date if not provided
+  const endDate = (data.endDate && !isNaN(new Date(data.endDate).getTime())) 
+    ? new Date(data.endDate).toISOString() 
+    : null;
 
   if (!code) {
     return Response.json({ ok: false, error: "Discount code is required." }, { status: 400 });
@@ -219,80 +230,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     discountClasses = ["ORDER"];
   }
 
-  if (discountType === "bxgy") {
-    // Buy X Get Y
-    const buyQty = Math.max(1, toNum(data.buyQty, 1));
-    const buyCollectionsMode = (data.buyCollectionsMode || "specific") as "all" | "specific";
-    const buyCollectionIds: string[] = data.buyCollectionIds || [];
-
-    const getQty = Math.max(1, toNum(data.getQty, 1));
-    const getBenefitType = (data.getBenefitType || "free") as "free" | "percent" | "amount";
-    const getBenefitValueNum = toNum(data.getBenefitValue);
-    const getCollectionsMode = (data.getCollectionsMode || "specific") as "all" | "specific";
-    const getCollectionIds: string[] = data.getCollectionIds || [];
-
-    const repeats = String(data.repeats) === "true";
-    const maxRepeatsPerOrder = toNum(data.maxRepeatsPerOrder) || null;
-
-    if (getBenefitType !== "free" && (!getBenefitValueNum || getBenefitValueNum <= 0)) {
-      return Response.json({ ok: false, error: "Enter a benefit value for %/amount discounts." }, { status: 400 });
-    }
-    if (getBenefitType === "percent" && (getBenefitValueNum <= 0 || getBenefitValueNum > 100)) {
-      return Response.json({ ok: false, error: "Percent must be between 1 and 100." }, { status: 400 });
-    }
-
-    functionId =
-      (data.functionId as string) ||
-      process.env.DISCOUNT_FUNCTION_ID_BXGY ||
-      (await getFunctionIdByTitle(admin, "JCI-Custom-Discount"));
-
-    if (!functionId) {
-      return Response.json({ ok: false, error: "Could not find function JCI-Custom-Discount." }, { status: 400 });
-    }
-
-    // Expand to product IDs for buy/get sides when "specific"
-    let buyEligibleProductIds: string[] = [];
-    let getEligibleProductIds: string[] = [];
-    if (buyCollectionsMode === "specific" && buyCollectionIds.length) {
-      buyEligibleProductIds = await expandCollectionsToProductIds(admin, buyCollectionIds);
-    }
-    if (getCollectionsMode === "specific" && getCollectionIds.length) {
-      getEligibleProductIds = await expandCollectionsToProductIds(admin, getCollectionIds);
-    }
-
-    const effect =
-      getBenefitType === "free"
-        ? { type: "FREE" }
-        : getBenefitType === "percent"
-        ? { type: "PERCENT", percent: getBenefitValueNum / 100 }
-        : { type: "AMOUNT", amount: asDecimal(getBenefitValueNum), currencyCode };
-
-    configuration = {
-      kind: "BXGY",
-      buy: {
-        quantity: buyQty,
-        scope: buyCollectionsMode === "all" ? "ALL" : "PRODUCTS",
-        eligibleProductIds: buyEligibleProductIds, // 🎯 product IDs only
-      },
-      get: {
-        quantity: getQty,
-        effect,
-        scope: getCollectionsMode === "all" ? "ALL" : "PRODUCTS",
-        eligibleProductIds: getEligibleProductIds, // 🎯 product IDs only
-      },
-      application: { repeats, maxRepeatsPerOrder },
-    };
-
-    discountClasses = ["ORDER"];
-  }
-
   // Build GraphQL input
   const variables = {
     codeAppDiscount: {
       title: code,
       code,
       functionId,
-      startsAt: new Date().toISOString(),
+      startsAt: startDate || new Date().toISOString(), // Use the start date from the form
+      endsAt: endDate || null, // Use the end date from the form
       discountClasses,
       combinesWith,
       metafields: [
