@@ -1,8 +1,9 @@
 import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
-import { Outlet, useLoaderData, useRouteError } from "react-router";
+import { Link, Outlet, useLoaderData, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { AppProvider as PolarisAppProvider, DatePicker, InlineStack } from '@shopify/polaris';  // Polaris AppProvider
 import { AppProvider as AppBridgeProvider } from "@shopify/shopify-app-react-router/react";
+import { NavMenu } from "@shopify/app-bridge-react";
 
 import '@shopify/polaris/build/esm/styles.css';
 
@@ -29,6 +30,13 @@ export default function App() {
 
   return (
     <AppBridgeProvider apiKey={apiKey} embedded>
+      <NavMenu>
+        <Link to="/app/discount" rel="discount">
+          Discount
+        </Link>
+        <Link to="/app/gift-card">Gitf Card</Link>
+      </NavMenu>
+
       <PolarisAppProvider i18n={i18n}>
         <Outlet />
       </PolarisAppProvider>
