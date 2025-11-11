@@ -1,12 +1,13 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "7cf9a161d7ffd71468abb346c77a05ea"
+client_id = "83f9f8b2d3a085ad6856b5034554647f"
 name = "cycology-custom-discount"
 application_url = "https://cycology-custom-discount-code-remix.vercel.app/"
 embedded = true
 
 [build]
 automatically_update_urls_on_dev = true
+include_env = ["SHOPIFY_APP_URL", "DEV_TUNNEL_URL", "NODE_ENV"]
 
 [webhooks]
 api_version = "2025-10"
@@ -25,9 +26,14 @@ api_version = "2025-10"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_discounts,read_products,write_discounts,write_products,read_orders"
+scopes = "read_products,write_products,read_discounts,write_discounts,read_orders,read_gift_cards,write_gift_cards,read_metaobjects,write_metaobjects,read_metaobject_definitions,write_metaobject_definitions,read_customers,write_customers"
 
 [auth]
 redirect_urls = [
   "https://cycology-custom-discount-code-remix.vercel.app/api/auth"
 ]
+
+[app_proxy]
+url = "https://fish-unless-opening-coordinate.trycloudflare.com/api"
+subpath = "jci-app"
+prefix = "apps"

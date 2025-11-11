@@ -6,20 +6,21 @@
 api_version = "2025-10"
 
 [[extensions]]
-name = "checkout-ui"
-handle = "checkout-ui"
+name = "jci-post-purchase"
+handle = "jci-post-purchase"
 type = "ui_extension"
-uid = "fddfc370-27c7-c30f-4ee0-a927194e2accadefd40c"
+uid = "a033f415-40af-8333-e6b4-349095d10a9d8ea87b19"
 
 # Controls where in Shopify your extension will be injected,
 # and the file that contains your extension’s source code. Learn more:
 # https://shopify.dev/docs/api/checkout-ui-extensions/latest/extension-targets-overview
 
 [[extensions.targeting]]
-module = "./src/Checkout.jsx"
-target = "purchase.checkout.block.render"
+module = "./src/ThankYouFooter.jsx"
+target = "purchase.thank-you.block.render"
 
 [extensions.capabilities]
+block_progress = true
 # Gives your extension access to directly query Shopify’s storefront API.
 # https://shopify.dev/docs/api/checkout-ui-extensions/latest/configuration#api-access
 api_access = true
@@ -27,7 +28,7 @@ api_access = true
 # Gives your extension access to make external network calls, using the
 # JavaScript `fetch()` API. Learn more:
 # https://shopify.dev/docs/api/checkout-ui-extensions/latest/configuration#network-access
-# network_access = true
+network_access = true
 
 # Loads metafields on checkout resources, including the cart,
 # products, customers, and more. Learn more:
@@ -50,3 +51,8 @@ api_access = true
 # type = "single_line_text_field"
 # name = "Banner title"
 # description = "Enter a title for the banner"
+
+[[extensions.metafields]]
+namespace = "custom"
+key = "jci_gift_card"
+owner_type = "store"

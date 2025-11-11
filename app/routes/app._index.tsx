@@ -4,7 +4,6 @@ import {Button} from '@shopify/polaris';
 import { Link } from "react-router";
 
 export default function Index() {
-
   return (
     <s-page>
       <Link to="/app/discount" rel="discount">
