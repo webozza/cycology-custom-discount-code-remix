@@ -4,10 +4,13 @@ import { boundary } from "@shopify/shopify-app-react-router/server";
 import { AppProvider as PolarisAppProvider, DatePicker, InlineStack } from '@shopify/polaris';  // Polaris AppProvider
 import { AppProvider as AppBridgeProvider } from "@shopify/shopify-app-react-router/react";
 import { NavMenu } from "@shopify/app-bridge-react";
+import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 
 import '@shopify/polaris/build/esm/styles.css';
 
 import { authenticate } from "../shopify.server";
+
+export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 // Initialize i18n (basic config, you can expand this later)
 const i18n = {

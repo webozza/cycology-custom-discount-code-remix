@@ -2,6 +2,7 @@ import '@shopify/ui-extensions/preact';
 import {render} from "preact";
 import { useEffect, useState } from 'preact/hooks';
 
+const APP_URL = 'https://cycology-custom-discount-code-remix.vercel.app';
 
 // 1. Export the extension
 export default async () => {
@@ -15,30 +16,26 @@ function Extension() {
     try {
       const token = await shopify.sessionToken.get(); 
       const orderId = await shopify.orderConfirmation.value.order.id;
-      const shopUrl = await shopify.shop.storefrontUrl;
-      console.log(`${shopUrl}/app/jci-app/metaobjects/gift-cards`)
-      const res = await fetch(`${shopUrl}/app/jci-app/metaobjects/gift-cards`, {
+      const res = await fetch(`${APP_URL}/api/metaobjects/gift-cards`, { 
         headers: { 
-          Authorization: `Bearer ${token}`, 
-          'Access-Control-Allow-Origin': '*',   
-          mode: "no-cors" 
+          Authorization: `Bearer ${token}`
         },
         method: 'POST',
         body: JSON.stringify({orderId: orderId})  
       });
-      const data = await res.json();    
+      const data = await res.json();
       setGiftamount(data.giftAmount);   
     } catch (error) {
-      console.error('fetchGiftCards error: ', error)
+      console.log('fetchGiftCards error: ', error)
     }
   } 
-
+ 
   useEffect(() => { 
     fetchGiftCards();      
   }, [shopify]);
 
   if(!giftamount){
-    return <div>a</div>; 
+    return <s-text></s-text>;
   }
   
   return ( 

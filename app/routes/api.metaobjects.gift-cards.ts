@@ -1,6 +1,6 @@
 // /app/routes/api.metaobjects.gift-cards.ts
 import { authenticate } from "../shopify.server";
-import { corsJson } from '../lib/cors.server'
+import { corsJson, makeCorsHeaders } from '../lib/cors.server'
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import jwt from "jsonwebtoken";
 import { getOfflineSessionByShop, shopifyAdminGraphQL } from '../lib/shopifyHelper'
@@ -30,28 +30,22 @@ function toOrderGid(id: string) {
   return `gid://shopify/Order/${id}`;
 }
 
-export const action = async ({ request }: ActionFunctionArgs) => {
-    console.log(request.method);
-    try {
-        if(request.method == "POST") {
-        const {cors} = await authenticate.public.checkout(request);
-        return cors(new Response(JSON.stringify({a: 1}), {
-            status: 200,
-            headers: {
-                "Content-type": "application/json"
-            },
-            }))
-        }
-    } catch (error) {
-        console.error('action error: ', error)
+export async function loader({ request }: LoaderFunctionArgs) {
+    const origin = request.headers.get("Origin") ?? undefined;
+    if (request.method === "OPTIONS") {
+        return new Response(null, {
+            status: 204,
+            headers: makeCorsHeaders(origin),
+        });
     }
-};
+    return new Response("Method not allowed", { status: 405 });
+}
 
-export async function action2({ request }: ActionFunctionArgs) {
+export async function action({ request }: ActionFunctionArgs) {
     const origin = request.headers.get("Origin") ?? undefined;
 
     if (request.method === "OPTIONS") {
-        return corsJson(null, 204, origin);
+        return corsJson(null, 200, origin);
     }
     const body = await request.json().catch(() => ({} as any));
     const auth = request.headers.get("Authorization") || "";
@@ -195,7 +189,7 @@ export async function action2({ request }: ActionFunctionArgs) {
         const giftCardInput = {
             initialValue: giftAmount,
             customerId: orderDetails.order.customer.id,
-            note: `Auto-generated gift card for order ${orderDetails.order.name} (${orderDetails.order.id})`,
+            note: `Auto-generated gift card for order ${orderDetails.order.name}`,
             expiresOn: null, 
         };
 
