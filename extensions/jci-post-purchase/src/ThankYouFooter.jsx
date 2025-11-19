@@ -11,6 +11,8 @@ export default async () => {
 
 function Extension() {
   const [giftamount, setGiftamount] = useState(null);
+
+  const formattedGiftAmount = giftamount != null ? shopify.i18n.formatCurrency(Number(giftamount)) : '';
    
   async function fetchGiftCards() {   
     try {
@@ -43,7 +45,7 @@ function Extension() {
       {giftamount ?
       <s-stack gap="base"> 
         <s-text>
-          Congrats, your order qualifies for a free ${giftamount} Gift Card!
+          Congrats, your order qualifies for a free {formattedGiftAmount} Gift Card!
         </s-text>
       </s-stack>
       : ''}
