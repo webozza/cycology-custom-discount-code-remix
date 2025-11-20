@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "83f9f8b2d3a085ad6856b5034554647f"
-name = "cycology-custom-discount"
+name = "JCI Discount & Gift"
 application_url = "https://cycology-custom-discount-code-remix.vercel.app/"
 embedded = true
 
@@ -34,6 +34,6 @@ redirect_urls = [
 ]
 
 [app_proxy]
-url = "https://fish-unless-opening-coordinate.trycloudflare.com/api"
+url = "https://cycology-custom-discount-code-remix.vercel.app/api"
 subpath = "jci-app"
 prefix = "apps"

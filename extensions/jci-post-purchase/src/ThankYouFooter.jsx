@@ -2,7 +2,9 @@ import '@shopify/ui-extensions/preact';
 import {render} from "preact";
 import { useEffect, useState } from 'preact/hooks';
 
-const APP_URL = 'https://cycology-custom-discount-code-remix.vercel.app';
+
+const APP_URL = 'https://qualify-symptoms-instrumental-moved.trycloudflare.com';
+//const APP_URL = 'https://cycology-custom-discount-code-remix.vercel.app';
 
 // 1. Export the extension
 export default async () => {
@@ -14,6 +16,8 @@ function Extension() {
 
   const formattedGiftAmount = giftamount != null ? shopify.i18n.formatCurrency(Number(giftamount)) : '';
    
+  const formattedGiftAmount = giftamount != null ? shopify.i18n.formatCurrency(Number(giftamount)) : '';
+
   async function fetchGiftCards() {   
     try {
       const token = await shopify.sessionToken.get(); 
