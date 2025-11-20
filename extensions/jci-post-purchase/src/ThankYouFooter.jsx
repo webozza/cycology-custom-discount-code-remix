@@ -3,8 +3,8 @@ import {render} from "preact";
 import { useEffect, useState } from 'preact/hooks';
 
 
-const APP_URL = 'https://qualify-symptoms-instrumental-moved.trycloudflare.com';
-//const APP_URL = 'https://cycology-custom-discount-code-remix.vercel.app';
+//const APP_URL = 'https://sail-definition-valley-buyers.trycloudflare.com';
+const APP_URL = 'https://cycology-custom-discount-code-remix.vercel.app';
 
 // 1. Export the extension
 export default async () => {
