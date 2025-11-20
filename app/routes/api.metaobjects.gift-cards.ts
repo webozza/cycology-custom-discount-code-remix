@@ -129,7 +129,7 @@ export async function action({ request }: ActionFunctionArgs) {
     );
 
     // --- Extract and filter entries
-    const entries = graphResult.metaobjects.edges.map((e: any) => {
+    const entries = graphResult.metaobjects.edges.filter((e: any) => e.node.capabilities.publishable.status === 'ACTIVE').map((e: any) => {
         const obj: Record<string, any> = {};
         e.node.fields.forEach((f: any) => (obj[f.key] = f.value));
         return { id: e.node.id, ...obj };
@@ -151,8 +151,6 @@ export async function action({ request }: ActionFunctionArgs) {
     console.log("Order amount:", orderAmount);
     console.log("Matched metaobject:", match);
     console.log("Gift amount:", giftAmount);
-
-    console.log('graphResult', graphResult.metaobjects.edges)
 
     if(giftAmount>0){
         const GIFT_CARD_MUTATION = `#graphql
