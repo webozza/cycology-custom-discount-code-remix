@@ -3,7 +3,7 @@ import {render} from "preact";
 import { useEffect, useState } from 'preact/hooks';
 
 
-//const APP_URL = 'https://sail-definition-valley-buyers.trycloudflare.com';
+//const APP_URL = 'https://bolt-spine-seeds-eos.trycloudflare.com';
 const APP_URL = 'https://cycology-custom-discount-code-remix.vercel.app';
 
 // 1. Export the extension
@@ -16,6 +16,7 @@ function Extension() {
    
   const formattedGiftAmount = giftamount != null ? shopify.i18n.formatCurrency(Number(giftamount)) : '';
 
+  console.log('Gift amount in footer: ', shopify);
   async function fetchGiftCards() {   
     try {
       const token = await shopify.sessionToken.get(); 

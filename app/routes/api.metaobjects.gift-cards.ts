@@ -71,7 +71,7 @@ export async function action({ request }: ActionFunctionArgs) {
         order(id: $id) {
             id
             name
-            totalPriceSet { shopMoney { amount currencyCode } }
+            totalPriceSet { shopMoney { amount currencyCode } presentmentMoney { amount currencyCode } }
             customer {
                 id
                 displayName
@@ -136,7 +136,7 @@ export async function action({ request }: ActionFunctionArgs) {
     });
 
     // --- Your order total from above
-    const orderAmount = Number(orderDetails.order?.totalPriceSet?.shopMoney?.amount ?? 0);
+    const orderAmount = Number(orderDetails.order?.totalPriceSet?.presentmentMoney?.amount ?? 0);
 
     // --- Find matching metaobject entry
     const match = entries.find((e: any) => {
