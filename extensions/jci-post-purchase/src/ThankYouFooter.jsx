@@ -3,7 +3,7 @@ import {render} from "preact";
 import { useEffect, useState } from 'preact/hooks';
 
 
-//const APP_URL = 'https://bolt-spine-seeds-eos.trycloudflare.com';
+//const APP_URL = 'https://ministry-turbo-recent-bloomberg.trycloudflare.com';
 const APP_URL = 'https://cycology-custom-discount-code-remix.vercel.app';
 
 // 1. Export the extension
@@ -13,9 +13,7 @@ export default async () => {
 
 function Extension() {
   const [giftamount, setGiftamount] = useState(null);
-
-  const formattedGiftAmount = giftamount != null ? shopify.i18n.formatCurrency(Number(giftamount)) : '';
-   
+  const shopDomain = shopify.shop.myshopifyDomain;
   const formattedGiftAmount = giftamount != null ? shopify.i18n.formatCurrency(Number(giftamount)) : '';
 
   console.log('Gift amount in footer: ', shopify);
@@ -28,7 +26,7 @@ function Extension() {
           Authorization: `Bearer ${token}`
         },
         method: 'POST',
-        body: JSON.stringify({orderId: orderId})  
+        body: JSON.stringify({orderId: orderId, shopDomain: shopDomain})  
       });
       const data = await res.json();
       setGiftamount(data.giftAmount);   

@@ -100,7 +100,9 @@ export function cartLinesDiscountsGenerateRun(
     (l.merchandise?.product?.metafield?.value || l?.attribute?.value) ? true : false;
 
   const hasEligible = (l: Line): boolean => {
-
+    if(cfg.conditions?.requiresProducts?.eligibleProductIds === undefined) {
+      return !hasDiscountProd(l);
+    }
     // You can implement your logic here to check if the line matches the eligible product IDs
     const eligibleProductIds = cfg.conditions?.requiresProducts?.eligibleProductIds ?? [];
     const eligibleSet = new Set(eligibleProductIds.map(String));

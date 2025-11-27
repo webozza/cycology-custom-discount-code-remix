@@ -2,25 +2,23 @@
 import { authenticate } from "../shopify.server";
 import { corsJson, makeCorsHeaders } from '../lib/cors.server'
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import jwt from "jsonwebtoken";
 import { getOfflineSessionByShop, shopifyAdminGraphQL } from '../lib/shopifyHelper'
+import crypto from "node:crypto";
 
-const toCustomerGid = (id: string) => id.startsWith("gid://") ? id : `gid://shopify/Customer/${id}`;
+const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I
 
-const API_KEY = process.env.SHOPIFY_API_KEY!;
-const API_SECRET = process.env.SHOPIFY_API_SECRET!;
-
-type ShopifyJWT = {
-  iss: string;
-  dest: string;          // e.g. "https://your-shop.myshopify.com"
-  aud: string;           // should match API_KEY
-  sub: string;
-  exp: number;
-  nbf: number;
-  iat: number;
-  jti?: string;
-  sid?: string;
-};
+export function createReferralCode(seed?: string, len = 16) {
+  // deterministic when seed provided; random otherwise
+  if (seed) {
+    const h = crypto.createHash("sha256").update(seed).digest();
+    let out = "";
+    for (let i = 0; i < len; i++) out += ALPHABET[h[i] % ALPHABET.length];
+    return out;
+  }
+  let out = "";
+  for (let i = 0; i < len; i++) out += ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
+  return out;
+}
 
 
 function toOrderGid(id: string) {
@@ -51,18 +49,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const auth = request.headers.get("Authorization") || "";
     const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
     let orderId = body.orderId ?? body.orderId ?? null;
-  // 2) Verify token with your API secret and constrain audience + algorithm
-    let claims: ShopifyJWT;
-    try {
-        claims = jwt.verify(token, API_SECRET, {
-        algorithms: ["HS256"],
-        audience: API_KEY, 
-        }) as ShopifyJWT;
-    } catch (err: any) {
-        return corsJson({ error: "Invalid/expired token", details: err?.message }, 401, origin);
-    }
-
-    const shopDomain:string = claims.dest;
+    let shopDomain:string = body.shopDomain ?? body.shopDomain ?? "";
 
     const offlineSession = await getOfflineSessionByShop(shopDomain ?? "");
 
@@ -152,6 +139,7 @@ export async function action({ request }: ActionFunctionArgs) {
     console.log("Matched metaobject:", match);
     console.log("Gift amount:", giftAmount);
 
+
     if(giftAmount>0){
         const GIFT_CARD_MUTATION = `#graphql
             mutation CreateGiftCard($input: GiftCardCreateInput!) {
@@ -186,6 +174,7 @@ export async function action({ request }: ActionFunctionArgs) {
         
         const giftCardInput = {
             initialValue: giftAmount,
+            code: createReferralCode(orderId),
             customerId: orderDetails.order.customer.id,
             note: `Auto-generated gift card for order ${orderDetails.order.name}`,
             expiresOn: null, 
