@@ -12,6 +12,9 @@ export default function Index() {
       <Link to="/app/gift-card" rel="discount">
         <Button size="large" variant="primary">Gift Card</Button>
       </Link>
+      <Link to="/app/free-gift" rel="free-gift">
+        <Button size="large" variant="primary">Frre Gift</Button>
+      </Link>
     </s-page>
   );
 }
