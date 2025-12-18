@@ -55,6 +55,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     });
     const shopJson = await shop.json();
     const discountJson = await discount.json();
+
+    console.log("Loader shop data:", JSON.stringify(shopJson));
+    console.log("Loader discount data:", JSON.stringify(discountJson));
     
     let productJson;
     if(discountJson?.data?.automaticDiscountNodes?.edges && discountJson?.data?.automaticDiscountNodes?.edges[0]?.node){
