@@ -155,6 +155,8 @@ export async function action({ request }: ActionFunctionArgs) {
       });
       const data = await resp.json();
 
+      console.log("Discount update response:", JSON.stringify(data));
+
       const metaMutation = `#graphql
       mutation SetShopFreeGiftMetafield(
           $ownerId: ID!
