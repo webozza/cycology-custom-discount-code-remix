@@ -44,141 +44,151 @@ const DISCOUNTFUNC_QUERY = `#graphql
 `;
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { admin } = await authenticate.admin(request);
-  const shop = await admin.graphql(SHOP_QUERY);
-  const discount = await admin.graphql(DISCOUNTFUNC_QUERY, {
-    variables: {
-      query: "type:app title:\"JCI Free Gift\"",
-      first: 1
-    }
-  });
-  const shopJson = await shop.json();
-  const discountJson = await discount.json();
-  
-  let productJson;
-  if(discountJson?.data?.automaticDiscountNodes?.edges && discountJson?.data?.automaticDiscountNodes?.edges[0].node){
-    let jsonValue = discountJson?.data?.automaticDiscountNodes?.edges[0].node?.metafield?.jsonValue;
-    const PRODUCTQUERY = `#graphql
-      query getProductsByIds($ids: [ID!]!) {
-        nodes(ids: $ids) {
-          ... on Product {
-            id
-            title
-            handle
-          }
-        }
-      }
-    `;
-    const productIds = jsonValue.product_ids.split(",").map((v:string) => {
-      return `gid://shopify/Product/${v}`;
-    })
-    const product = await admin.graphql(PRODUCTQUERY, {
+  try {
+    const { admin } = await authenticate.admin(request);
+    const shop = await admin.graphql(SHOP_QUERY);
+    const discount = await admin.graphql(DISCOUNTFUNC_QUERY, {
       variables: {
-        ids: productIds
+        query: "type:app title:\"JCI Free Gift\"",
+        first: 1
       }
     });
-    productJson = await product.json();
-  }
+    const shopJson = await shop.json();
+    const discountJson = await discount.json();
+    
+    let productJson;
+    if(discountJson?.data?.automaticDiscountNodes?.edges && discountJson?.data?.automaticDiscountNodes?.edges[0]?.node){
+      let jsonValue = discountJson?.data?.automaticDiscountNodes?.edges[0]?.node?.metafield?.jsonValue;
+      const PRODUCTQUERY = `#graphql
+        query getProductsByIds($ids: [ID!]!) {
+          nodes(ids: $ids) {
+            ... on Product {
+              id
+              title
+              handle
+            }
+          }
+        }
+      `;
+      const productIds = jsonValue.product_ids.split(",").map((v:string) => {
+        return `gid://shopify/Product/${v}`;
+      })
+      const product = await admin.graphql(PRODUCTQUERY, {
+        variables: {
+          ids: productIds
+        }
+      });
+      productJson = await product.json();
+    }
 
-  return { shop: shopJson?.data?.shop, discount: discountJson?.data?.automaticDiscountNodes?.edges ? discountJson?.data?.automaticDiscountNodes?.edges[0].node : {}, product: productJson ? productJson.data.nodes : [] };
+    return { shop: shopJson?.data?.shop, discount: discountJson?.data?.automaticDiscountNodes?.edges ? discountJson?.data?.automaticDiscountNodes?.edges[0]?.node : {}, product: productJson ? productJson.data.nodes : [] };
+  } catch (error) {
+    console.error("Loader error:", error);
+    return { shop: null, discount: null, product: [] };
+  }
 };
 
 
 
 export async function action({ request }: ActionFunctionArgs) {
-  const { admin } = await authenticate.admin(request);
-  const form = await request.formData();
+  try {
+    const { admin } = await authenticate.admin(request);
+    const form = await request.formData();
 
-  const shopId = form.get("shopId") as string || null;
-  const discountId = form.get("discountId") as string || null;
-  const metafieldId = form.get("metafieldId") as string || null;
-  const title = form.get("title") as string || null;
-  const thresholdAmount = form.get("thresholdAmount") as string || null;
-  const selectedProductIds = form.get("selectedProductIds") as string || null;
-  const selectedProductHandles = form.get("selectedProductHandles") as string || null;
+    const shopId = form.get("shopId") as string || null;
+    const discountId = form.get("discountId") as string || null;
+    const metafieldId = form.get("metafieldId") as string || null;
+    const title = form.get("title") as string || null;
+    const thresholdAmount = form.get("thresholdAmount") as string || null;
+    const selectedProductIds = form.get("selectedProductIds") as string || null;
+    const selectedProductHandles = form.get("selectedProductHandles") as string || null;
 
-  const mutation = `#graphql
-    mutation discountAutomaticAppUpdate($automaticAppDiscount: DiscountAutomaticAppInput!, $id: ID!) {
-      discountAutomaticAppUpdate(automaticAppDiscount: $automaticAppDiscount, id: $id) {
-        automaticAppDiscount {
-          discountId
-          title
-        }
-        userErrors {
-          field
-          message
-        }
-      }
-    }
-  `;
-  const variables = {
-      id: discountId,
-      automaticAppDiscount: {
-        metafields: [
-          {
-            id: metafieldId,
-            value: JSON.stringify({
-              title: title,
-              threshold_amount: thresholdAmount,
-              product_ids: selectedProductIds,
-              product_handles: selectedProductHandles,
-            }),
-          },
-        ],
-      }
-    };
-
-    const resp = await admin.graphql(mutation, {
-      variables
-    });
-    const data = await resp.json();
-
-    const metaMutation = `#graphql
-    mutation SetShopFreeGiftMetafield(
-        $ownerId: ID!
-        $value: String!
-    ) {
-        metafieldsSet(metafields: [
-        {
-            ownerId: $ownerId
-            namespace: "custom"
-            key: "jci_free_gift"
-            type: "json"
-            value: $value
-        }
-        ]) {
-        metafields {
-            id
-            namespace
-            key
-            value
-            type
-        }
-        userErrors {
+    const mutation = `#graphql
+      mutation discountAutomaticAppUpdate($automaticAppDiscount: DiscountAutomaticAppInput!, $id: ID!) {
+        discountAutomaticAppUpdate(automaticAppDiscount: $automaticAppDiscount, id: $id) {
+          automaticAppDiscount {
+            discountId
+            title
+          }
+          userErrors {
             field
             message
-            code
+          }
         }
+      }
+    `;
+    const variables = {
+        id: discountId,
+        automaticAppDiscount: {
+          metafields: [
+            {
+              id: metafieldId,
+              value: JSON.stringify({
+                title: title,
+                threshold_amount: thresholdAmount,
+                product_ids: selectedProductIds,
+                product_handles: selectedProductHandles,
+              }),
+            },
+          ],
         }
-    }`;
+      };
 
-    const metaValue = {
-      title: title,
-      threshold_amount: thresholdAmount,
-      product_ids: selectedProductIds,
-      product_handles: selectedProductHandles,
-    }
+      const resp = await admin.graphql(mutation, {
+        variables
+      });
+      const data = await resp.json();
 
-    const metaVariables = {
-      ownerId: shopId,
-      value: JSON.stringify(metaValue)
-    };
+      const metaMutation = `#graphql
+      mutation SetShopFreeGiftMetafield(
+          $ownerId: ID!
+          $value: String!
+      ) {
+          metafieldsSet(metafields: [
+          {
+              ownerId: $ownerId
+              namespace: "custom"
+              key: "jci_free_gift"
+              type: "json"
+              value: $value
+          }
+          ]) {
+          metafields {
+              id
+              namespace
+              key
+              value
+              type
+          }
+          userErrors {
+              field
+              message
+              code
+          }
+          }
+      }`;
 
-  const metaResp = await admin.graphql(metaMutation, {
-    variables: metaVariables,
-  });
-  const metaData = await metaResp.json();
-  return {data, metaData};
+      const metaValue = {
+        title: title,
+        threshold_amount: thresholdAmount,
+        product_ids: selectedProductIds,
+        product_handles: selectedProductHandles,
+      }
+
+      const metaVariables = {
+        ownerId: shopId,
+        value: JSON.stringify(metaValue)
+      };
+
+    const metaResp = await admin.graphql(metaMutation, {
+      variables: metaVariables,
+    });
+    const metaData = await metaResp.json();
+    return {data, metaData};
+  } catch (error) {
+    console.error("Action error:", error);
+    return { error: "An error occurred while processing your request." };
+  }
 }
 
 /** ─────────────────────────────────────────────────────────────────────
