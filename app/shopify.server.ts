@@ -7,6 +7,7 @@ import {
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 import prisma from "./db.server";
 import { registerMetafields } from './lib/registerMetafields'
+import { freeGiftMetafields } from './lib/freeGiftMetafields'
 
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,
@@ -27,6 +28,7 @@ const shopify = shopifyApp({
           `App installed on shop: ${session.shop} with id: ${session.id}`,
         );
         await registerMetafields(admin);
+        await freeGiftMetafields(admin);
       } catch (e) {
         console.error("Setup error:", e);
       }
