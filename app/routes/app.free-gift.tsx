@@ -85,6 +85,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       }
     }
 
+    console.log("Loader data:", { shop: shopJson?.data?.shop, discount: discountJson?.data?.automaticDiscountNodes?.edges ? discountJson?.data?.automaticDiscountNodes?.edges[0]?.node : {}, product: productJson ? productJson.data.nodes : [] });
+
     return { shop: shopJson?.data?.shop, discount: discountJson?.data?.automaticDiscountNodes?.edges ? discountJson?.data?.automaticDiscountNodes?.edges[0]?.node : {}, product: productJson ? productJson.data.nodes : [] };
   } catch (error) {
     console.error("Loader error:", error);
@@ -281,6 +283,7 @@ export default function NewDiscount() {
     fd.set("thresholdAmount", thresholdAmount);
     fd.set("thresholdAmount", thresholdAmount);
     fd.set("selectedProductIds", selectedProductIds);
+    fd.set("selectedProductHandles", selectedProductHandles);
     fetcher.submit(fd, { method: "POST" });
   };
 
