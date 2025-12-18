@@ -107,6 +107,16 @@ export async function action({ request }: ActionFunctionArgs) {
     const selectedProductIds = form.get("selectedProductIds") as string || null;
     const selectedProductHandles = form.get("selectedProductHandles") as string || null;
 
+    console.log("Action form data:", {
+      shopId,
+      discountId,
+      metafieldId,
+      title,
+      thresholdAmount,
+      selectedProductIds,
+      selectedProductHandles
+    });
+
     const mutation = `#graphql
       mutation discountAutomaticAppUpdate($automaticAppDiscount: DiscountAutomaticAppInput!, $id: ID!) {
         discountAutomaticAppUpdate(automaticAppDiscount: $automaticAppDiscount, id: $id) {
