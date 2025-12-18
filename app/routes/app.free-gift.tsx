@@ -70,15 +70,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           }
         }
       `;
-      const productIds = jsonValue.product_ids.split(",").map((v:string) => {
-        return `gid://shopify/Product/${v}`;
-      })
-      const product = await admin.graphql(PRODUCTQUERY, {
-        variables: {
-          ids: productIds
+      if(jsonValue && jsonValue.product_ids){
+        const productIds = jsonValue.product_ids.split(",").map((v:string) => {
+          return `gid://shopify/Product/${v}`;
+        })
+        if(productIds){
+          const product = await admin.graphql(PRODUCTQUERY, {
+            variables: {
+              ids: productIds
+            }
+          });
+          productJson = await product.json();
         }
-      });
-      productJson = await product.json();
+      }
     }
 
     return { shop: shopJson?.data?.shop, discount: discountJson?.data?.automaticDiscountNodes?.edges ? discountJson?.data?.automaticDiscountNodes?.edges[0]?.node : {}, product: productJson ? productJson.data.nodes : [] };
