@@ -23,7 +23,7 @@ query CartInput {
   }
   discount {
     discountClasses
-    metafield(namespace: "custom", key: "free_gift_json") {
+    metafield(namespace: "app", key: "free_gift_json") {
       jsonValue
     }
   }

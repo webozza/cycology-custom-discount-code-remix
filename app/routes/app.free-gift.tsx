@@ -20,7 +20,7 @@ const DISCOUNTFUNC_QUERY = `#graphql
       edges {
         node {
           id
-          metafield(namespace: "custom", key: "free_gift_json"){
+          metafield(namespace: "app", key: "free_gift_json"){
             id
             jsonValue
           }
@@ -55,6 +55,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     });
     const shopJson = await shop.json();
     const discountJson = await discount.json();
+
+    console.log("Loader shop data:", JSON.stringify(shopJson));
+    console.log("Loader discount data:", JSON.stringify(discountJson));
     
     let productJson;
     if(discountJson?.data?.automaticDiscountNodes?.edges && discountJson?.data?.automaticDiscountNodes?.edges[0]?.node){
@@ -166,7 +169,7 @@ export async function action({ request }: ActionFunctionArgs) {
           metafieldsSet(metafields: [
           {
               ownerId: $ownerId
-              namespace: "custom"
+              namespace: "app"
               key: "jci_free_gift"
               type: "json"
               value: $value
@@ -277,6 +280,11 @@ export default function NewDiscount() {
 
   /** Form submit */
   const handleCreate = () => {
+    if (!discountId) {
+      console.error("Discount ID is invalid or does not exist.");
+      return;
+    }
+
     const fd = new FormData();
     fd.set("shopId", shop.id);
     fd.set("discountId", discountId);

@@ -9,6 +9,7 @@ import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 import '@shopify/polaris/build/esm/styles.css';
 
 import { authenticate } from "../shopify.server";
+import { freeGiftMetafields } from '../lib/freeGiftMetafields'
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
@@ -22,7 +23,14 @@ const i18n = {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
+  let {admin} = await authenticate.admin(request);
+  try {
+    await freeGiftMetafields(admin);
+  } catch (error) {
+    console.error("Error occurred while accessing auth route:", error);
+  }
+
+
 
   // eslint-disable-next-line no-undef
   return { apiKey: process.env.SHOPIFY_API_KEY || "" };
