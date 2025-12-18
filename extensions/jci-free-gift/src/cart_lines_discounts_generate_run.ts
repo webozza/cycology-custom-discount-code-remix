@@ -6,7 +6,6 @@ import {
   CartLinesDiscountsGenerateRunResult,
 } from '../generated/api';
 
-//47778675753192, 47778675818728
 export function cartLinesDiscountsGenerateRun(
   input: CartInput,
 ): CartLinesDiscountsGenerateRunResult {
@@ -18,12 +17,20 @@ export function cartLinesDiscountsGenerateRun(
   const metafields = input.discount.metafield?.jsonValue;
   const productIds = metafields.product_ids ? metafields.product_ids.split(",") : [];
   const thresholdAmount = parseFloat(metafields.threshold_amount ?? "0");
-  const titleDiscount = metafields.discountTitle ?? "FREE GIFT";
+  const titleDiscount = metafields.title ?? "FREE GIFT";
+
+  const operations:any = [];
+
+  if(productIds.length==0){
+    return {
+      operations
+    };
+  }
 
   let freeGiftProd:any = null;
   const totalAmount = lines
   .filter(line => {
-    const variantId = line.merchandise.id.split('/').pop();
+    const variantId = line.merchandise.product.id.split('/').pop();
     if(freeGiftProd){
       return true;
     }
@@ -35,14 +42,8 @@ export function cartLinesDiscountsGenerateRun(
     }
   })
   .reduce((sum, line) => {
-    // Sum the amounts for the lines that passed the filter
     return sum + parseFloat(line.cost.subtotalAmount.amount);
   }, 0);
-
-  const operations:any = [];
-
-  console.log('totalAmount', totalAmount)
-  console.log('freeGiftProd', freeGiftProd)
 
   if(thresholdAmount>=totalAmount){
     return {
@@ -54,7 +55,7 @@ export function cartLinesDiscountsGenerateRun(
     productDiscountsAdd: {
       candidates: [
         {
-          message: 'FREE GIFT',
+          message: titleDiscount,
           targets: [
             {
               cartLine: {
@@ -63,8 +64,8 @@ export function cartLinesDiscountsGenerateRun(
             },
           ],
           value: {
-            percentage: {
-              value: 100,
+            fixedAmount: {
+              amount: freeGiftProd.cost.amountPerQuantity.amount,
             },
           },
         }
