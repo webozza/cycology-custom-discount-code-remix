@@ -48,7 +48,7 @@ export function cartLinesDiscountsGenerateRun(
     return sum + parseFloat(line.cost.subtotalAmount.amount);
   }, 0);
 
-  if(thresholdAmount>=totalAmount){
+  if(thresholdAmount>=Math.floor(totalAmount)){
     return {
       operations
     };
