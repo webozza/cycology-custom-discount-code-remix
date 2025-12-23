@@ -37,8 +37,11 @@ export function cartLinesDiscountsGenerateRun(
     if(!productIds.includes(variantId)){
       return true;
     }else{
-      freeGiftProd = line;
-      return false;
+      if(line.attribute?.value==="true"){
+        freeGiftProd = line;
+        return false;
+      }
+      return true;
     }
   })
   .reduce((sum, line) => {

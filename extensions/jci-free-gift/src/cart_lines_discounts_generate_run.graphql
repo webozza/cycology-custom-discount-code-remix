@@ -11,6 +11,9 @@ query CartInput {
           amount
         }
       }
+      attribute(key: "_free_gift"){
+        value
+      }
       merchandise {
         __typename
         ... on ProductVariant {
