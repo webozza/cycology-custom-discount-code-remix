@@ -111,6 +111,10 @@ export async function action({ request }: ActionFunctionArgs) {
     const thresholdAmount = form.get("thresholdAmount") as string || null;
     const selectedProductIds = form.get("selectedProductIds") as string || null;
     const selectedProductHandles = form.get("selectedProductHandles") as string || null;
+    const disclaimerText = form.get("disclaimerText") as string || null;
+    const awayText = form.get("awayText") as string || null;
+    const completeText = form.get("completeText") as string || null;
+
 
     console.log("Action form data:", {
       shopId,
@@ -147,6 +151,9 @@ export async function action({ request }: ActionFunctionArgs) {
                 threshold_amount: thresholdAmount,
                 product_ids: selectedProductIds,
                 product_handles: selectedProductHandles,
+                disclaimer_text: disclaimerText,
+                away_text: awayText,
+                complete_text: completeText,
               }),
             },
           ],
@@ -195,6 +202,9 @@ export async function action({ request }: ActionFunctionArgs) {
         threshold_amount: thresholdAmount,
         product_ids: selectedProductIds,
         product_handles: selectedProductHandles,
+        disclaimer_text: disclaimerText,
+        away_text: awayText,
+        complete_text: completeText,
       }
 
       const metaVariables = {
@@ -254,6 +264,10 @@ export default function NewDiscount() {
   const [prodProducts, setProdProducts] = useState<PickedProduct[]>([]);
   const [selectedProductIds, setSelectedProductIds] = useState("");
   const [selectedProductHandles, setSelectedProductHandles] = useState("");
+  const [disclaimerText, setDisclaimerText] = useState("");
+  const [awayText, setAwayText] = useState("");
+  const [completeText, setCompleteText] = useState("");
+
 
   useEffect(() => {
     if(discount?.metafield?.jsonValue){
@@ -263,6 +277,10 @@ export default function NewDiscount() {
       setTitle(jsonValue.title);
       setThresholdAmount(jsonValue.threshold_amount);
       setSelectedProductIds(jsonValue.product_ids);
+      // NEW
+      setDisclaimerText(jsonValue.disclaimer_text || "");
+      setAwayText(jsonValue.away_text || "");
+      setCompleteText(jsonValue.complete_text || "");
     }
   }, [discount]);
 
@@ -295,6 +313,9 @@ export default function NewDiscount() {
     fd.set("thresholdAmount", thresholdAmount);
     fd.set("selectedProductIds", selectedProductIds);
     fd.set("selectedProductHandles", selectedProductHandles);
+    fd.set("disclaimerText", disclaimerText);
+    fd.set("awayText", awayText);
+    fd.set("completeText", completeText);
     fetcher.submit(fd, { method: "POST" });
   };
 
@@ -347,6 +368,28 @@ export default function NewDiscount() {
             onChange={(e: any) => setThresholdAmount(e.target.value)}
             placeholder="e.g. 20.00"
           />
+
+          <s-text-field
+            label="Disclaimer Text"
+            value={disclaimerText}
+            onChange={(e: any) => setDisclaimerText(e.target.value)}
+            placeholder="e.g. CHOOSE THE FREE GIFT OF YOUR CHOICE. You must add the item to your cart for the offer to be valid."
+          />
+
+          <s-text-field
+            label="Away Text"
+            value={awayText}
+            onChange={(e: any) => setAwayText(e.target.value)}
+            placeholder="e.g. You're (price) away from unlocking a FREE GIFT."
+          />
+
+          <s-text-field
+            label="Complete Text"
+            value={completeText}
+            onChange={(e: any) => setCompleteText(e.target.value)}
+            placeholder="e.g. and earned a FREE GIFT!"
+          />
+
 
           <InlineStack gap="400" align="center">
             <a href="/app/discounts">

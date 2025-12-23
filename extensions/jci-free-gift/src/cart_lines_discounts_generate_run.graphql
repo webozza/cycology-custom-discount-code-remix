@@ -23,6 +23,20 @@ query CartInput {
         }
       }
     }
+    cost{
+      subtotalAmount{
+        amount
+        currencyCode
+      }
+      totalAmount{
+        amount
+        currencyCode
+      }
+      totalDutyAmount{
+        amount
+        currencyCode
+      }
+    }
   }
   discount {
     discountClasses
