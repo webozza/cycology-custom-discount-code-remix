@@ -46,6 +46,7 @@ export default function App() {
           Discount
         </Link>
         <Link to="/app/gift-card">Gitf Card</Link>
+        <Link to="/app/free-gift">Free Gift</Link>
       </NavMenu>
 
       <PolarisAppProvider i18n={i18n}>
